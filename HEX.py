@@ -15,23 +15,43 @@ async def handle_instagram(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("لطفاً یک لینک معتبر اینستاگرام بفرست.")
         return
 
-    await update.message.reply_text("⏳ در حال دانلود ویدیو... لطفاً صبر کن.")
+    await update.message.reply_text("⏳ در حال پردازش لینک... لطفاً صبر کن.")
 
     try:
-        api_url = f"https://api.ryzendesu.vip/instadl?url={url}"
-        response = requests.get(api_url).json()
+        headers = {
+            "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+            "X-Requested-With": "XMLHttpRequest"
+        }
+        data = {
+            "q": url,
+            "t": "media",
+        }
 
-        video_url = response["result"]["url"]
+        response = requests.post("https://save-insta.app/api/ajaxSearch", headers=headers, data=data)
+        result = response.json()
 
-        await update.message.reply_video(video_url)
+        media_list = result.get("media", [])
+        if not media_list:
+            await update.message.reply_text("❌ ویدیویی پیدا نشد. شاید لینک خصوصی باشه.")
+            return
+
+        for media in media_list:
+            if media.endswith(".mp4"):
+                await update.message.reply_video(media)
+            elif media.endswith(".jpg") or media.endswith(".jpeg") or media.endswith(".png"):
+                await update.message.reply_photo(media)
+            else:
+                await update.message.reply_text(f"🔗 لینک فایل: {media}")
+
     except Exception as e:
-        await update.message.reply_text("❌ خطا در دانلود ویدیو. دوباره تلاش کن.")
+        await update.message.reply_text("❌ خطا در پردازش لینک. دوباره تلاش کن.")
 
 app = ApplicationBuilder().token(TOKEN).build()
 app.add_handler(CommandHandler("start", start))
 app.add_handler(MessageHandler(filters.TEXT, handle_instagram))
 
 app.run_polling()
+
 
 
 
