@@ -1,56 +1,26 @@
 import os
-import requests
 from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, ContextTypes, filters
 
-TOKEN = os.getenv("BOT_TOKEN")
+TOKEN = os.environ.get("BOT_TOKEN")
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("سلام DORX! لینک پست اینستاگرام رو بفرست تا ویدیو رو برات دانلود کنم 🎥🔥")
+    await update.message.reply_text("سلام 👋 ربات روی Railway اجرا شد!")
 
-async def handle_instagram(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    url = update.message.text
+async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text(update.message.text)
 
-    if "instagram.com" not in url:
-        await update.message.reply_text("لطفاً یک لینک معتبر اینستاگرام بفرست.")
-        return
+def main():
+    app = ApplicationBuilder().token(TOKEN).build()
 
-    await update.message.reply_text("⏳ در حال پردازش لینک... لطفاً صبر کن.")
+    app.add_handler(CommandHandler("start", start))
+    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, echo))
 
-    try:
-        headers = {
-            "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
-            "X-Requested-With": "XMLHttpRequest"
-        }
-        data = {
-            "q": url,
-            "t": "media",
-        }
+    app.run_polling()
 
-        response = requests.post("https://save-insta.app/api/ajaxSearch", headers=headers, data=data)
-        result = response.json()
+if __name__ == "__main__":
+    main()
 
-        media_list = result.get("media", [])
-        if not media_list:
-            await update.message.reply_text("❌ ویدیویی پیدا نشد. شاید لینک خصوصی باشه.")
-            return
-
-        for media in media_list:
-            if media.endswith(".mp4"):
-                await update.message.reply_video(media)
-            elif media.endswith(".jpg") or media.endswith(".jpeg") or media.endswith(".png"):
-                await update.message.reply_photo(media)
-            else:
-                await update.message.reply_text(f"🔗 لینک فایل: {media}")
-
-    except Exception as e:
-        await update.message.reply_text("❌ خطا در پردازش لینک. دوباره تلاش کن.")
-
-app = ApplicationBuilder().token(TOKEN).build()
-app.add_handler(CommandHandler("start", start))
-app.add_handler(MessageHandler(filters.TEXT, handle_instagram))
-
-app.run_polling()
 
 
 
