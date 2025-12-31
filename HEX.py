@@ -1,37 +1,37 @@
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import ApplicationBuilder, CommandHandler, CallbackQueryHandler, ContextTypes
 import os
+from telegram import Update, ReplyKeyboardMarkup
+from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, ContextTypes, filters
 
 TOKEN = os.environ.get("BOT_TOKEN")
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     keyboard = [
-        [
-            InlineKeyboardButton("🎮 مولتی", callback_data="multi"),
-            InlineKeyboardButton("⚔️ بتل", callback_data="battle")
-        ]
+        ["🎮 مولتی", "⚔️ بتل"]
     ]
-    reply_markup = InlineKeyboardMarkup(keyboard)
+
+    reply_markup = ReplyKeyboardMarkup(
+        keyboard,
+        resize_keyboard=True
+    )
 
     await update.message.reply_text(
-        "یکی از گزینه‌ها رو انتخاب کن 👇",
+        "یکی از حالت‌ها رو انتخاب کن 👇",
         reply_markup=reply_markup
     )
 
-async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    query = update.callback_query
-    await query.answer()
+async def handle_buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    text = update.message.text
 
-    if query.data == "multi":
-        await query.message.reply_text("🎮 وارد بخش مولتی شدی")
-    elif query.data == "battle":
-        await query.message.reply_text("⚔️ وارد بخش بتل شدی")
+    if text == "🎮 مولتی":
+        await update.message.reply_text("🎮 وارد بخش مولتی شدی")
+    elif text == "⚔️ بتل":
+        await update.message.reply_text("⚔️ وارد بخش بتل شدی")
 
 def main():
     app = ApplicationBuilder().token(TOKEN).build()
 
     app.add_handler(CommandHandler("start", start))
-    app.add_handler(CallbackQueryHandler(buttons))
+    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_buttons))
 
     app.run_polling()
 
